@@ -3,6 +3,7 @@ import paramiko
 import fnmatch
 import glob
 import re
+from collections import namedtuple
 
 def main():
     host, search_parh, file_type, search_str = get_user_data()
@@ -11,30 +12,26 @@ def main():
     parse_file(search_path, sftp_client, file_type, search_str)
     
 def auth_data(ip_adress):
-    # to use dictiany 
-    ssh_data_dict = {
-        "grex.org": {
-            "user": "v_vzakaryan",
-            "password": "Today12345!"
-        },
-        "xxx.xxx.x.x": {
-            "user": "username",
-            "password": "password"
-        }
-    }
-    user_data = ssh_data_dict.get(ip_adress, "grex.org")
-    return user_data["user"], user_data["password"]
+    UserData = namedtuple("UserData", "ip user password")
+    local_credetials = UserData("grex.org", "v_vzakaryan", "Today12345!")
+    dev_credetials = UserData("test", "v_vzakaryan1", "Today12345!1")
+    prod_credetials = UserData("test2", "v_vzakaryan2", "Today12345!2")
+    user_data = [local_credetials, dev_credetials, prod_credetials]        
+    # Searching in tuples our ip
+    for required_data in user_data:
+        if required_data.ip == ip_adress:
+            return required_data.user, required_data.password
+    print('ValueError: We have not entered ip_adress in our base.')
 
 def get_user_data():
-    host = raw_input("Enter the ip : ")
-    search_path = raw_input("Enter log directory path to search : ")
-    file_type = raw_input("Enter log file extension (last few symbols) : ")
-    search_str = raw_input("Enter the id (or another text) : ")
+    host = input("Enter the ip : ")
+    search_path = input("Enter log directory path to search : ")
+    file_type = input("Enter log file extension (last few symbols) : ")
+    search_str = input("Enter the id (or another text) : ")
     return host, search_path, file_type, search_str   
 
 def connect_to_ssh(host, user, secret):
     print("Connecting to ssh")
-    print(user, secret)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname=host, username=user, password=secret, port=22)
